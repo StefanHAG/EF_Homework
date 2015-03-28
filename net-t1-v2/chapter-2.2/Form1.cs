@@ -16,6 +16,15 @@ namespace chapter_2._2
             InitializeComponent();
         }
 
+        int poemid;
+
+        protected override void OnLoad(EventArgs e)
+        {
+            showPoems();
+
+            base.OnLoad(e);
+        }
+
         private void insertButton_Click(object sender, EventArgs e)
         {
             using (var context = new EF6Recipes2Entities())
@@ -45,6 +54,20 @@ namespace chapter_2._2
                 
                 textBox.Text = "Data inserted!";
             }
+        }
+
+        private void dataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            textBoxFirstName.Text = dataGridView.Rows[e.RowIndex].Cells["FirstName"].Value.ToString();
+            textBoxMiddleName.Text = (dataGridView.Rows[e.RowIndex].Cells["MiddleName"].Value.ToString() != null) ? (dataGridView.Rows[e.RowIndex].Cells["MiddleName"].Value.ToString()) : ("");
+            textBoxLastName.Text = dataGridView.Rows[e.RowIndex].Cells["LastName"].Value.ToString();
+            textBoxMeter.Text = dataGridView.Rows[e.RowIndex].Cells["Meter"].Value.ToString();
+            textBoxTitle.Text = dataGridView.Rows[e.RowIndex].Cells["Title"].Value.ToString();
+
+            poemid = Int32.Parse(dataGridView.Rows[e.RowIndex].Cells["Id"].Value.ToString());
+
+            updateButton.Enabled = true;
+            deleteButton.Enabled = true;
         }
 
         private void showData_Click(object sender, EventArgs e)
@@ -85,6 +108,147 @@ namespace chapter_2._2
 
                 textBox.Text = str;
             }
+        }
+
+        private void addButton_Click(object sender, EventArgs e)
+        {
+            if (textBoxFirstName.Text != "" || textBoxTitle.Text != "" || textBoxLastName.Text != "" || textBoxMeter.Text != "")
+            {
+                using (var context = new EF6Recipes2Entities())
+                {
+                    var poem = new Poem
+                    {
+                        Title = textBoxTitle.Text
+                    };
+
+                    //poem.Poet = searchPoet(textBoxFirstName.Text, textBoxMiddleName.Text, textBoxLastName.Text);
+                    //poem.Meter = searchMeter(textBoxMeter.Text);
+
+                    //search for poet
+                    var poet = context.Poets.SingleOrDefault(b => b.FirstName == textBoxFirstName.Text
+                        && b.MiddleName == textBoxMiddleName.Text && b.LastName == textBoxLastName.Text);
+                    if (poet == null)
+                    {
+                        poet = new Poet
+                        {
+                            FirstName = textBoxFirstName.Text,
+                            MiddleName = textBoxMiddleName.Text,
+                            LastName = textBoxLastName.Text
+                        };
+                    }
+
+                    //search for meter
+                    var meter = context.Meters.SingleOrDefault(b => b.MeterName == textBoxMeter.Text);
+                    if (meter == null)
+                    {
+                        meter = new Meter
+                        {
+                            MeterName = textBoxMeter.Text
+                        };
+                    }
+
+                    poem.Poet = poet;
+                    poem.Meter = meter;
+                    //context.Attach(poem);
+                    context.Poems.AddObject(poem);
+                    context.SaveChanges();
+                }
+            }
+            else 
+            {
+                MessageBox.Show("Next fileds cannot be empty: Title, Meter, First Name and Last Name!");
+            }
+
+            showPoems();
+        }
+
+        private Poet searchPoet(String firstName, String middleName, String lastName)
+        {
+            using (var context = new EF6Recipes2Entities())
+            {
+                var poet = context.Poets.SingleOrDefault(b => b.FirstName == firstName && b.MiddleName == middleName && b.LastName == lastName);
+                if (poet != null)
+                {
+                    return poet;
+                }
+                else
+                {
+                    return new Poet
+                    {
+                        FirstName = textBoxFirstName.Text,
+                        MiddleName = textBoxMiddleName.Text,
+                        LastName = textBoxLastName.Text
+                    };
+                }
+            }
+        }
+
+        private Meter searchMeter(String meterName)
+        {
+            using (var context = new EF6Recipes2Entities())
+            {
+                var meter = context.Meters.SingleOrDefault(b => b.MeterName == meterName);
+                if (meter != null)
+                {
+                    return meter;
+                }
+                else
+                {
+                    return new Meter
+                    {
+                        MeterName = meterName
+                    };
+                }
+            }
+        }
+
+        private void showPoems()
+        {
+            using (var context = new EF6Recipes2Entities())
+            {
+                dataGridView.Rows.Clear();
+
+                foreach (var poem in context.Poems)
+                {
+                    dataGridView.Rows.Add();
+                    int RowIndex = dataGridView.RowCount - 1;
+                    DataGridViewRow row = dataGridView.Rows[RowIndex];
+
+                    row.Cells["Id"].Value = poem.PoemId;
+                    row.Cells["FirstName"].Value = poem.Poet.FirstName;
+                    row.Cells["LastName"].Value = poem.Poet.LastName;
+                    row.Cells["MiddleName"].Value = poem.Poet.MiddleName != null ? poem.Poet.MiddleName : "";
+                    row.Cells["Title"].Value = poem.Title;
+                    row.Cells["Meter"].Value = poem.Meter.MeterName;
+
+                }
+            }
+
+            updateButton.Enabled = false;
+            deleteButton.Enabled = false;
+
+            textBoxFirstName.Text = "";
+            textBoxMiddleName.Text = "";
+            textBoxLastName.Text = "";
+            textBoxMeter.Text = "";
+            textBoxTitle.Text = "";
+        }
+
+        private void clearButton_Click(object sender, EventArgs e)
+        {
+            updateButton.Enabled = false;
+            deleteButton.Enabled = false;
+
+            textBoxFirstName.Text = "";
+            textBoxMiddleName.Text = "";
+            textBoxLastName.Text = "";
+            textBoxMeter.Text = "";
+            textBoxTitle.Text = "";
+        }
+
+        private void updateButton_Click(object sender, EventArgs e)
+        {
+
         }
 
         
